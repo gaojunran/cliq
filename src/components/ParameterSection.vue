@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import InputText from "primevue/inputtext";
-import ToggleSwitch from "primevue/toggleswitch";
+import ParameterInput from "./ParameterInput.vue";
 import type { Arg, Flag } from "../types/types";
 
 interface Props {
@@ -13,24 +12,6 @@ interface Props {
 }
 
 defineProps<Props>();
-
-function getHelp(param: Arg | Flag): string | undefined {
-  if ("help_long" in param) {
-    return (param as Flag).help_long || param.help || param.help_first_line;
-  }
-  return param.help || param.help_first_line;
-}
-
-function getPlaceholder(param: Arg | Flag): string {
-  if ("arg" in param && (param as Flag).arg) {
-    return (param as Flag).arg!.usage;
-  }
-  return param.usage;
-}
-
-function isBooleanFlag(flag: Flag): boolean {
-  return !flag.arg;
-}
 </script>
 
 <template>
@@ -50,64 +31,34 @@ function isBooleanFlag(flag: Flag): boolean {
 
     <div class="p-4 space-y-4">
       <!-- Arguments -->
-      <div v-for="arg in args" :key="arg.name">
-        <div class="flex items-center justify-between gap-2 mb-2">
-          <label
-            class="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white"
-          >
-            {{ arg.name }}
-            <span v-if="isRequired" class="text-red-500">*</span>
-          </label>
-          <p
-            v-if="getHelp(arg)"
-            class="text-xs text-gray-500 dark:text-gray-400 flex-1 text-right"
-          >
-            {{ getHelp(arg) }}
-          </p>
-        </div>
-        <InputText
-          v-model="commandValues[arg.name]"
-          :placeholder="getPlaceholder(arg)"
-          class="w-full"
-        />
-      </div>
+      <ParameterInput
+        v-for="arg in args"
+        :key="arg.name"
+        :param="arg"
+        :is-flag="false"
+        :is-required="isRequired"
+        :model-value="commandValues[arg.name] || ''"
+        @update:model-value="commandValues[arg.name] = $event as string"
+      />
 
       <!-- Flags -->
-      <div v-for="flag in flags" :key="flag.name">
-        <div class="flex items-center justify-between gap-2 mb-2">
-          <label
-            class="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white"
-          >
-            {{ flag.name }}
-            <span v-if="isRequired" class="text-red-500">*</span>
-          </label>
-          <p
-            v-if="getHelp(flag)"
-            class="text-xs text-gray-500 dark:text-gray-400 flex-1 text-right"
-          >
-            {{ getHelp(flag) }}
-          </p>
-        </div>
-
-        <!-- Boolean Flag (Toggle) -->
-        <div
-          v-if="isBooleanFlag(flag)"
-          class="flex items-center gap-3 p-2 bg-gray-50 dark:bg-[#1a1a1a] rounded border border-gray-200 dark:border-white/10"
-        >
-          <ToggleSwitch v-model="booleanFlags[flag.name]" />
-          <span class="text-sm text-gray-600 dark:text-gray-400 font-mono">{{
-            flag.usage
-          }}</span>
-        </div>
-
-        <!-- Flag with value (Input) -->
-        <InputText
-          v-else
-          v-model="commandValues[flag.name]"
-          :placeholder="getPlaceholder(flag)"
-          class="w-full"
-        />
-      </div>
+      <ParameterInput
+        v-for="flag in flags"
+        :key="flag.name"
+        :param="flag"
+        :is-flag="true"
+        :is-required="isRequired"
+        :model-value="
+          flag.arg
+            ? commandValues[flag.name] || ''
+            : booleanFlags[flag.name] || false
+        "
+        @update:model-value="
+          flag.arg
+            ? (commandValues[flag.name] = $event as string)
+            : (booleanFlags[flag.name] = $event as boolean)
+        "
+      />
     </div>
   </div>
 </template>
