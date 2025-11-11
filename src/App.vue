@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useCliq } from "./composables/useCliq";
-import { getCurrentWebview } from "@tauri-apps/api/webview";
 import {
   AppHeader,
   AppDescription,
@@ -11,7 +10,7 @@ import {
   EmptyState,
   ResultDialog,
 } from "./components";
-import { onMounted, onUnmounted, provide, reactive } from "vue";
+import { provide } from "vue";
 
 const {
   cliqJson,
@@ -33,94 +32,16 @@ const {
   optionalParams,
   runCommand,
   copyCommand,
+  registerDragTarget,
+  unregisterDragTarget,
+  dragState,
 } = useCliq();
-
-// Drag and drop state
-const dragTargets = reactive<Map<string, HTMLElement>>(new Map());
-const dragState = reactive<Record<string, boolean>>({});
-let unlisten: (() => void) | null = null;
-
-// Register/unregister input elements for drag & drop
-function registerDragTarget(paramName: string, element: HTMLElement) {
-  dragTargets.set(paramName, element);
-}
-
-function unregisterDragTarget(paramName: string) {
-  dragTargets.delete(paramName);
-  delete dragState[paramName];
-}
 
 // Provide drag & drop context to child components
 provide("dragAndDrop", {
   registerDragTarget,
   unregisterDragTarget,
   dragState,
-});
-
-onMounted(async () => {
-  unlisten = await getCurrentWebview().onDragDropEvent((event) => {
-    if (event.payload.type === "over") {
-      const { x, y } = event.payload.position;
-      console.log(`Over event at (${x}, ${y})`);
-
-      // Reset all drag states
-      Object.keys(dragState).forEach((key) => {
-        dragState[key] = false;
-      });
-
-      // Use document.elementFromPoint to find the element under the cursor
-      const elementAtPoint = document.elementFromPoint(x, y);
-      console.log("Element at point:", elementAtPoint);
-
-      if (elementAtPoint) {
-        // Check which registered input contains this element
-        dragTargets.forEach((element, paramName) => {
-          if (element === elementAtPoint || element.contains(elementAtPoint)) {
-            console.log(`Drag over: ${paramName}`);
-            dragState[paramName] = true;
-          }
-        });
-      }
-    } else if (event.payload.type === "drop") {
-      const { x, y } = event.payload.position;
-      console.log(`Drop event at (${x}, ${y})`);
-
-      // Use document.elementFromPoint to find the element under the cursor
-      const elementAtPoint = document.elementFromPoint(x, y);
-      console.log("Element at drop point:", elementAtPoint);
-
-      if (elementAtPoint) {
-        // Find which registered input received the drop
-        dragTargets.forEach((element, paramName) => {
-          if (element === elementAtPoint || element.contains(elementAtPoint)) {
-            const paths = (event.payload as any).paths;
-            const filePath = paths?.[0] ?? "";
-            console.log(`Drop on: ${paramName}, file: ${filePath}`);
-            if (filePath) {
-              // Update the corresponding value
-              commandValues.value[paramName] = filePath;
-            }
-          }
-        });
-      }
-
-      // Reset all drag states
-      Object.keys(dragState).forEach((key) => {
-        dragState[key] = false;
-      });
-    } else {
-      // cancelled
-      Object.keys(dragState).forEach((key) => {
-        dragState[key] = false;
-      });
-    }
-  });
-});
-
-onUnmounted(() => {
-  if (unlisten) {
-    unlisten();
-  }
 });
 </script>
 

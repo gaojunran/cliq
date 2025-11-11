@@ -1,7 +1,8 @@
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted, reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { Command as ExecuteCommand } from "@tauri-apps/plugin-shell";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 import {
   parseDefaultBool,
   checkSystemDarkTheme,
@@ -25,6 +26,11 @@ export function useCliq() {
   const builtCommand = ref<string>("");
   const isCopied = ref(false);
   const showResultDialog = ref(false);
+
+  // Drag and drop state
+  const dragTargets = reactive<Map<string, HTMLElement>>(new Map());
+  const dragState = reactive<Record<string, boolean>>({});
+  let unlisten: (() => void) | null = null;
 
   // ==================== Computed Properties ====================
   const currentCommand = computed(() => {
@@ -198,13 +204,89 @@ export function useCliq() {
   }
 
   // ==================== Lifecycle & Watchers ====================
+  // ==================== Drag and Drop Functions ====================
+  function registerDragTarget(paramName: string, element: HTMLElement) {
+    dragTargets.set(paramName, element);
+  }
+
+  function unregisterDragTarget(paramName: string) {
+    dragTargets.delete(paramName);
+    delete dragState[paramName];
+  }
+
+  // ==================== Lifecycle & Watchers ====================
   watch(selectedSubcommand, () => {
     resetParamsToDefaults();
   });
 
-  onMounted(() => {
+  onMounted(async () => {
     initializeTheme();
     getCliqJson();
+
+    // Setup drag and drop listener
+    unlisten = await getCurrentWebview().onDragDropEvent((event) => {
+      if (event.payload.type === "over") {
+        const { x, y } = event.payload.position;
+
+        // Reset all drag states
+        Object.keys(dragState).forEach((key) => {
+          dragState[key] = false;
+        });
+
+        // Use document.elementFromPoint to find the element under the cursor
+        const elementAtPoint = document.elementFromPoint(x, y);
+
+        if (elementAtPoint) {
+          // Check which registered input contains this element
+          dragTargets.forEach((element, paramName) => {
+            if (
+              element === elementAtPoint ||
+              element.contains(elementAtPoint)
+            ) {
+              dragState[paramName] = true;
+            }
+          });
+        }
+      } else if (event.payload.type === "drop") {
+        const { x, y } = event.payload.position;
+
+        // Use document.elementFromPoint to find the element under the cursor
+        const elementAtPoint = document.elementFromPoint(x, y);
+
+        if (elementAtPoint) {
+          // Find which registered input received the drop
+          dragTargets.forEach((element, paramName) => {
+            if (
+              element === elementAtPoint ||
+              element.contains(elementAtPoint)
+            ) {
+              const paths = (event.payload as any).paths;
+              const filePath = paths?.[0] ?? "";
+              if (filePath) {
+                // Update the corresponding value
+                commandValues.value[paramName] = filePath;
+              }
+            }
+          });
+        }
+
+        // Reset all drag states
+        Object.keys(dragState).forEach((key) => {
+          dragState[key] = false;
+        });
+      } else {
+        // cancelled
+        Object.keys(dragState).forEach((key) => {
+          dragState[key] = false;
+        });
+      }
+    });
+  });
+
+  onUnmounted(() => {
+    if (unlisten) {
+      unlisten();
+    }
   });
 
   // ==================== Return ====================
@@ -237,5 +319,9 @@ export function useCliq() {
     executeCommand,
     runCommand,
     copyCommand,
+    // Drag and drop
+    registerDragTarget,
+    unregisterDragTarget,
+    dragState,
   };
 }
