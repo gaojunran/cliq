@@ -7,10 +7,11 @@ export interface Arg {
   help_long?: string;
   help_first_line?: string;
   required: boolean;
-  double_dash?: string; // unnecessary
+  double_dash?: string; // TODO: implement
   var?: boolean; // receive multiple values or not
   hide: boolean;
   default?: string;
+  type?: Type; // only give if the arg is file or dir
 }
 
 export interface Flag {
@@ -22,12 +23,13 @@ export interface Flag {
   short: string[]; // short flag names
   long: string[]; // long flag names
   required?: boolean;
-  double_dash?: string; // unnecessary
+  double_dash?: string; // TODO: implement
   var?: boolean; // receive multiple values or not
   hide: boolean;
   global: boolean;
   arg?: Arg;
   default?: string;
+  type?: Type; // only give if the flag is file or dir
 }
 
 export interface Command {
@@ -62,3 +64,5 @@ export interface CascadeOption {
   command: Command;
   subcommands?: CascadeOption[];
 }
+
+export type Type = "file" | "dir";

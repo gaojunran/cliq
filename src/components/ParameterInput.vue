@@ -2,7 +2,9 @@
 import { ref, onMounted, onUnmounted, inject, computed, nextTick } from "vue";
 import InputText from "primevue/inputtext";
 import ToggleSwitch from "primevue/toggleswitch";
+import { Button } from "primevue";
 import type { Arg, Flag } from "../types/types";
+import { open } from "@tauri-apps/plugin-dialog";
 
 interface Props {
   param: Arg | Flag;
@@ -57,6 +59,16 @@ function getPlaceholder(param: Arg | Flag): string {
   return param.usage;
 }
 
+async function invokeFileDirPicker() {
+  const file = await open({
+    multiple: false, // TODO: support multiple selection
+    directory: props.param.type === "dir",
+  });
+  if (file && typeof file === "string") {
+    emit("update:modelValue", file);
+  }
+}
+
 onMounted(async () => {
   // Wait for component to be fully mounted
   await nextTick();
@@ -109,19 +121,31 @@ onUnmounted(() => {
         param.usage
       }}</span>
     </div>
+    <div class="flex" v-else>
+      <!-- Text Input (Arg or Flag with value) -->
+      <InputText
+        ref="inputRef"
+        :model-value="(modelValue as string) || ''"
+        @update:model-value="$emit('update:modelValue', $event as string)"
+        :placeholder="getPlaceholder(param)"
+        :class="[
+          'w-full transition-all flex-1 font-mono!',
+          isDragging &&
+            'ring-2! ring-blue-500! ring-opacity-50! bg-blue-50 dark:bg-blue-900/20',
+        ]"
+      />
 
-    <!-- Text Input (Arg or Flag with value) -->
-    <InputText
-      v-else
-      ref="inputRef"
-      :model-value="(modelValue as string) || ''"
-      @update:model-value="$emit('update:modelValue', $event as string)"
-      :placeholder="getPlaceholder(param)"
-      :class="[
-        'w-full transition-all',
-        isDragging &&
-          'ring-2! ring-blue-500! ring-opacity-50! bg-blue-50 dark:bg-blue-900/20',
-      ]"
-    />
+      <Button
+        v-if="param?.type === 'file' || param?.type === 'dir'"
+        class="ml-2"
+        severity="secondary"
+        :icon="
+          'pi pi-' +
+          (param?.type === 'file' ? 'file' : '') +
+          (param?.type === 'dir' ? 'folder' : '')
+        "
+        @click="invokeFileDirPicker"
+      />
+    </div>
   </div>
 </template>
