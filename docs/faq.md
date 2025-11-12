@@ -7,3 +7,7 @@
 ## 有机会支持手机端吗？
 
 对于安卓设备，后续我们会考虑基于 termux 的 intent 机制向 termux 发送命令并接收命令结果。但基于安卓系统的限制，应该会有很多特性无法支持 (例如文件选择得到的路径，termux 很可能无法访问)。不考虑支持 iOS。
+
+## 我如何确保我开发的 CLI 二进制能在 cliq 里正常被访问到？
+
+目前你需要确保 CLI 二进制在 PATH 里。未来会支持：[Sidecar](https://v2.tauri.app/develop/sidecar/)。
