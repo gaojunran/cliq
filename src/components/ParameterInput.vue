@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, inject, computed, nextTick } from "vue";
+import {
+  ref,
+  onMounted,
+  onUnmounted,
+  inject,
+  computed,
+  nextTick,
+  useTemplateRef,
+} from "vue";
 import InputText from "primevue/inputtext";
 import ToggleSwitch from "primevue/toggleswitch";
-import { Button } from "primevue";
+import { Button, Textarea } from "primevue";
+import Popover from "primevue/popover";
 import type { Arg, Flag } from "../types/types";
 import { open } from "@tauri-apps/plugin-dialog";
 
@@ -21,7 +30,8 @@ const props = defineProps<Props>();
 // emit is used in template via $emit
 const emit = defineEmits<Emits>();
 
-const inputRef = ref<InstanceType<typeof InputText> | null>(null);
+const inputRef = useTemplateRef("input");
+const popoverRef = useTemplateRef("popover");
 
 // Inject drag & drop context from App.vue
 const dragAndDrop = inject<{
@@ -35,11 +45,34 @@ const isDragging = computed(() => {
   return dragAndDrop?.dragState[props.param.name] ?? false;
 });
 
-function getHelp(param: Arg | Flag): string | undefined {
-  if ("help_long" in param) {
-    return param.help_long || param.help || param.help_first_line;
+function toggleLongHelp(show: boolean, event: Event) {
+  const popover = popoverRef.value as InstanceType<typeof Popover>;
+  if (popover) {
+    if (show) {
+      popover.show(event);
+    } else {
+      popover.hide();
+    }
   }
-  return param.help || param.help_first_line;
+}
+
+function getShortHelp(param: Arg | Flag): string | undefined {
+  return (
+    param.help_first_line ??
+    param.help?.split("\n")[0] ??
+    param.help_long?.split("\n")[0]
+  );
+}
+
+function getLongHelp(param: Arg | Flag): string | undefined {
+  // get a longer help than `getShortHelp`
+  const shortHelpLength = getShortHelp(param)?.length ?? 0;
+  if (param.help_long?.length ?? 0 > shortHelpLength) {
+    return param.help_long;
+  } else if (param.help && param.help.length > shortHelpLength) {
+    return param.help;
+  }
+  return undefined;
 }
 
 function isBoolean(param: Arg | Flag): boolean {
@@ -99,12 +132,22 @@ onUnmounted(() => {
       >
         {{ param.name }}
         <span v-if="isRequired" class="text-red-500">*</span>
+        <i
+          class="pi pi-question-circle text-black/50 dark:text-white/50"
+          v-if="getLongHelp(param)"
+          @mouseenter="toggleLongHelp(true, $event)"
+          @mouseleave="toggleLongHelp(false, $event)"
+        >
+        </i>
+        <Popover ref="popover">
+          <div>{{ getLongHelp(param) }}</div>
+        </Popover>
       </label>
       <p
-        v-if="getHelp(param)"
-        class="text-xs text-gray-500 dark:text-gray-400 flex-1 text-right"
+        v-if="getShortHelp(param)"
+        class="text-xs text-black/50 dark:text-white/50 flex-1 text-right"
       >
-        {{ getHelp(param) }}
+        {{ getShortHelp(param) }}
       </p>
     </div>
 
@@ -121,17 +164,24 @@ onUnmounted(() => {
         param.usage
       }}</span>
     </div>
+    <Textarea
+      v-else-if="param.type === 'textarea'"
+      :model-value="(modelValue as string) || ''"
+      @update:model-value="$emit('update:modelValue', $event as string)"
+      :placeholder="getPlaceholder(param)"
+      class="w-full"
+    />
     <div class="flex" v-else>
       <!-- Text Input (Arg or Flag with value) -->
       <InputText
-        ref="inputRef"
+        ref="input"
         :model-value="(modelValue as string) || ''"
         @update:model-value="$emit('update:modelValue', $event as string)"
         :placeholder="getPlaceholder(param)"
         :class="[
           'w-full transition-all flex-1 font-mono!',
           isDragging &&
-            'ring-2! ring-blue-500! ring-opacity-50! bg-blue-50 dark:bg-blue-900/20',
+            'ring-2! ring-blue-500! ring-opacity-50! bg-blue-50! dark:bg-blue-900/20!',
         ]"
       />
 

@@ -84,7 +84,7 @@ fn generate_cliq_json() -> miette::Result<String> {
 
     // 遍历完所有候选目录后仍未找到任何文件
     Err(miette::miette!(
-        "No .cliq.json or usage.kdl file found in expected locations (base/cliq, base, or base's parent)."
+        "No .cliq.json or usage.kdl file found in expected locations."
     ))
 }
 

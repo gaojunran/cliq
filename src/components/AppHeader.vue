@@ -34,7 +34,7 @@ defineEmits<Emits>();
               </h1>
               <p
                 v-if="cliqJson?.version"
-                class="text-xs text-gray-500 dark:text-gray-400"
+                class="text-xs text-black/50 dark:text-white/50"
               >
                 v{{ cliqJson.version }}
               </p>

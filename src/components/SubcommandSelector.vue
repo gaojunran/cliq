@@ -41,6 +41,10 @@ defineEmits<Emits>();
         :optionGroupChildren="['subcommands']"
         placeholder="Select a subcommand"
         class="w-full"
+        :pt="{
+          root: 'w-1/2',
+          list: 'h-80 lg:h-96 overflow-y-scroll',
+        }"
       >
         <template #option="slotProps">
           <div class="flex items-center gap-2">
@@ -50,7 +54,7 @@ defineEmits<Emits>();
                 slotProps.option.subcommands &&
                 slotProps.option.subcommands.length > 0
                   ? 'pi-folder text-green-500'
-                  : 'pi-file text-gray-400',
+                  : 'pi-code text-gray-400',
               ]"
             ></i>
             <span

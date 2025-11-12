@@ -65,4 +65,4 @@ export interface CascadeOption {
   subcommands?: CascadeOption[];
 }
 
-export type Type = "file" | "dir";
+export type Type = "file" | "dir" | "textarea";

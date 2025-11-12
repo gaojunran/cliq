@@ -430,12 +430,12 @@
           {
             "name": "ID",
             "usage": "<ID>",
-            "help": "Name of the daemon to run",
+            "help": "Name of the daemon to run. Receive an integer",
             "help_first_line": "Name of the daemon to run",
             "required": true,
             "double_dash": "Optional",
             "hide": false,
-            "type": "file"
+            "type": "textarea"
           },
           {
             "name": "RUN",

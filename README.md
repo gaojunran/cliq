@@ -51,6 +51,10 @@ mise run dev
 
 后续我们会支持这一步骤的自动化，敬请期待。
 
+## 详细帮助
+
+- [参数输入组件](docs/parameter-input.md)
+
 ## TODO LIST
 
 - [ ] 补充参数
