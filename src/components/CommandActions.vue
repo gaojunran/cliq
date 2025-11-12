@@ -21,7 +21,7 @@ defineEmits<Emits>();
       <button
         @click="$emit('run-command')"
         :disabled="isExecuting"
-        class="bg-[#10b981] hover:bg-[#059669] active:bg-[#047857] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 transition-all duration-200 flex items-center justify-center gap-3 group border-r border-white/10"
+        class="bg-[#10b981] hover:bg-[#059669] active:bg-[#047857] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 transition-all duration-200 flex items-center justify-center gap-3 group border-r border-white/10 cursor-pointer"
       >
         <svg
           v-if="!isExecuting"
@@ -70,7 +70,7 @@ defineEmits<Emits>();
 
       <button
         @click="$emit('copy-command')"
-        class="bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white font-semibold py-3 px-6 transition-all duration-200 flex items-center justify-center gap-3 group"
+        class="bg-gray-600 hover:bg-gray-700 active:bg-gray-800 text-white font-semibold py-3 px-6 transition-all duration-200 flex items-center justify-center gap-3 group cursor-pointer"
       >
         <svg
           v-if="!isCopied"
@@ -100,9 +100,7 @@ defineEmits<Emits>();
             d="M5 13l4 4L19 7"
           />
         </svg>
-        <span class="text-base">{{
-          isCopied ? "Copied!" : "Copy"
-        }}</span>
+        <span class="text-base">{{ isCopied ? "Copied!" : "Copy" }}</span>
       </button>
     </div>
   </div>

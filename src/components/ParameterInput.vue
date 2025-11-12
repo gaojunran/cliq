@@ -10,7 +10,7 @@ import {
 } from "vue";
 import InputText from "primevue/inputtext";
 import ToggleSwitch from "primevue/toggleswitch";
-import { Button, Textarea } from "primevue";
+import { Button, Textarea, Password } from "primevue";
 import Popover from "primevue/popover";
 import type { Arg, Flag } from "../types/types";
 import { open } from "@tauri-apps/plugin-dialog";
